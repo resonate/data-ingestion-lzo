@@ -1,0 +1,38 @@
+project.version = '0.1.0'
+group = 'com.resonate.lambda'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'idea'
+apply plugin: "com.github.johnrengelman.shadow"
+
+sourceCompatibility = 1.8
+
+shadowJar {
+    baseName = 'data-ingestion-lzo'
+
+    configurations = [project.configurations.compile]
+}
+
+repositories {
+    maven { url "http://nexus.aws.resonatedigital.net/nexus/content/groups/public" }
+}
+
+dependencies {
+    testCompile(
+            [group: 'org.mockito', name: 'mockito-core', version: '2.19.1'],
+            [group: 'junit', name: 'junit', version: '4.8.2']
+    )
+}
+build {
+    dependsOn shadowJar
+}
