@@ -1,38 +1,73 @@
-project.version = '0.1.0'
-group = 'com.resonate.lambda'
-
 buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
-    }
+	repositories {
+		// mavenLocal()
+		mavenCentral()
+		jcenter()
+		// maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+	}
+
+	dependencies {
+		classpath 'org.anarres.gradle:gradle-stdproject-plugin:1.0.8'
+		classpath 'org.anarres.gradle:gradle-jcpp-plugin:1.0.2'
+	}
 }
 
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'idea'
-apply plugin: "com.github.johnrengelman.shadow"
+ext.githubProjectName = 'lzo-java'
 
-sourceCompatibility = 1.8
-
-shadowJar {
-    baseName = 'data-ingestion-lzo'
-
-    configurations = [project.configurations.compile]
+apply plugin: 'org.anarres.stdproject'
+stdproject {
 }
 
-repositories {
-    maven { url "http://nexus.aws.resonatedigital.net/nexus/content/groups/public" }
+subprojects {
+	group = "org.anarres.lzo"
+
+	apply plugin: 'org.anarres.stdmodule'
+	stdmodule {
+		description "The LZO compression codec in pure Java."
+		author id: 'shevek', name: 'Shevek', email: 'github@anarres.org'
+		license 'GPL-3.0'
+	}
+
+	dependencies {
+		compile 'com.google.code.findbugs:annotations:2.0.3'
+
+		testCompile 'org.slf4j:slf4j-api:1.7.7'
+		testCompile 'commons-io:commons-io:2.4'
+	}
+
+	sourceCompatibility = 1.5
+	animalsniffer {
+		signature = "org.codehaus.mojo.signature:java16:+@signature"
+	}
 }
 
-dependencies {
-    testCompile(
-            [group: 'org.mockito', name: 'mockito-core', version: '2.19.1'],
-            [group: 'junit', name: 'junit', version: '4.8.2']
-    )
+project(':lzo-core') {
+	apply plugin: 'jcpp'
+
+	dependencies {
+		compile 'commons-logging:commons-logging:1.1.1'
+	}
+
+	jcpp {
+		localIncludePath << project.file("src/main/jcpp/include")
+		localIncludePath << project.file("src/main/jcpp/src")
+	}
 }
-build {
-    dependsOn shadowJar
+
+project(':lzo-commons') {
+	dependencies {
+		compile project(':lzo-core')
+		compile 'org.apache.commons:commons-compress:1.13'
+
+		testCompile project(':lzo-core').sourceSets.test.output
+	}
+}
+
+project(':lzo-hadoop') {
+	dependencies {
+		compile project(':lzo-core')
+		compile 'org.apache.hadoop:hadoop-core:1.2.1'
+
+		testCompile project(':lzo-core').sourceSets.test.output
+	}
 }
